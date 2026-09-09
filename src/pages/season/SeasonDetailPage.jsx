@@ -1,3 +1,4 @@
+
 import {
   CalendarDays,
   Clock3,
@@ -5,24 +6,28 @@ import {
   Trophy,
   Users,
 } from 'lucide-react'
+import { useParams } from 'react-router-dom'
 
+import SeasonParticipants from '../../components/common/SeasonParticipants'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
 
-const MOCK_SEASON = {
-  id: 'season-08',
-  name: 'Season 08',
-  status: 'ONGOING',
-  date: '14 Sep 2026',
-  startTime: '19:30',
-  location: 'Garuda Arena',
-  description:
-    'Fourfeo community dengan format 4 team dan 6 pertandingan.',
-  participants: 48,
-  totalParticipants: 48,
-  currentMatch: 4,
-  totalMatches: 6,
+const MOCK_SEASONS = {
+  'season-08': {
+    id: 'season-08',
+    name: 'Season 08',
+    status: 'ONGOING',
+    date: '14 Sep 2026',
+    startTime: '19:30',
+    location: 'Garuda Arena',
+    description:
+      'Fourfeo community dengan format 4 team dan 6 pertandingan.',
+    participants: 48,
+    totalParticipants: 48,
+    currentMatch: 4,
+    totalMatches: 6,
+  },
 }
 
 const STATUS_CONFIG = {
@@ -30,22 +35,27 @@ const STATUS_CONFIG = {
     label: 'Draft',
     variant: 'neutral',
   },
+
   REGISTRATION_OPEN: {
     label: 'Registration Open',
     variant: 'info',
   },
+
   REGISTRATION_CLOSED: {
     label: 'Registration Closed',
     variant: 'warning',
   },
+
   DRAWING: {
     label: 'Drawing',
     variant: 'warning',
   },
+
   ONGOING: {
     label: 'Ongoing',
     variant: 'success',
   },
+
   FINISHED: {
     label: 'Finished',
     variant: 'neutral',
@@ -53,7 +63,11 @@ const STATUS_CONFIG = {
 }
 
 function SeasonDetailPage() {
-  const season = MOCK_SEASON
+  const { seasonId } = useParams()
+
+  const season =
+    MOCK_SEASONS[seasonId] ??
+    MOCK_SEASONS['season-08']
 
   const status =
     STATUS_CONFIG[season.status] ??
@@ -81,7 +95,9 @@ function SeasonDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* ==================================================
+          Season Header
+      ================================================== */}
       <Card padding="none">
         <div className="overflow-hidden rounded-2xl">
           <div className="relative min-h-64 bg-slate-950">
@@ -90,9 +106,7 @@ function SeasonDetailPage() {
             <div className="relative flex min-h-64 flex-col justify-end p-5 sm:p-7 lg:p-8">
               <div className="max-w-3xl">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge
-                    variant={status.variant}
-                  >
+                  <Badge variant={status.variant}>
                     {status.label}
                   </Badge>
 
@@ -114,12 +128,14 @@ function SeasonDetailPage() {
         </div>
       </Card>
 
-      {/* Season Information */}
+      {/* ==================================================
+          Season Information
+      ================================================== */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
-              <CalendarDays size={19} />
+          <div className="flex items-start gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <CalendarDays size={20} />
             </div>
 
             <div className="min-w-0">
@@ -127,7 +143,7 @@ function SeasonDetailPage() {
                 Date
               </p>
 
-              <p className="mt-1 text-sm font-bold text-slate-950">
+              <p className="mt-1 font-bold text-slate-900">
                 {season.date}
               </p>
             </div>
@@ -135,9 +151,9 @@ function SeasonDetailPage() {
         </Card>
 
         <Card>
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
-              <Clock3 size={19} />
+          <div className="flex items-start gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <Clock3 size={20} />
             </div>
 
             <div className="min-w-0">
@@ -145,7 +161,7 @@ function SeasonDetailPage() {
                 Start Time
               </p>
 
-              <p className="mt-1 text-sm font-bold text-slate-950">
+              <p className="mt-1 font-bold text-slate-900">
                 {season.startTime}
               </p>
             </div>
@@ -153,9 +169,9 @@ function SeasonDetailPage() {
         </Card>
 
         <Card>
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
-              <MapPin size={19} />
+          <div className="flex items-start gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+              <MapPin size={20} />
             </div>
 
             <div className="min-w-0">
@@ -163,17 +179,17 @@ function SeasonDetailPage() {
                 Location
               </p>
 
-              <p className="mt-1 truncate text-sm font-bold text-slate-950">
-                {season.location}
+              <p className="mt-1 truncate font-bold text-slate-900">
+                {season.location || '—'}
               </p>
             </div>
           </div>
         </Card>
 
         <Card>
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
-              <Users size={19} />
+          <div className="flex items-start gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+              <Users size={20} />
             </div>
 
             <div className="min-w-0">
@@ -181,7 +197,7 @@ function SeasonDetailPage() {
                 Participants
               </p>
 
-              <p className="mt-1 text-sm font-bold text-slate-950">
+              <p className="mt-1 font-bold text-slate-900">
                 {season.participants} /{' '}
                 {season.totalParticipants}
               </p>
@@ -190,7 +206,9 @@ function SeasonDetailPage() {
         </Card>
       </div>
 
-      {/* Progress */}
+      {/* ==================================================
+          Progress
+      ================================================== */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <div className="flex items-start justify-between gap-4">
@@ -200,36 +218,35 @@ function SeasonDetailPage() {
               </p>
 
               <p className="mt-1 text-sm text-slate-500">
-                Jumlah peserta Season saat ini.
+                Progress peserta Season.
               </p>
             </div>
 
-            <Users
-              size={20}
-              className="shrink-0 text-slate-400"
+            <span className="text-sm font-extrabold text-emerald-600">
+              {Math.round(
+                participantProgress,
+              )}
+              %
+            </span>
+          </div>
+
+          <div className="mt-5 h-3 overflow-hidden rounded-full bg-slate-100">
+            <div
+              className="h-full rounded-full bg-emerald-500 transition-all duration-300"
+              style={{
+                width: `${participantProgress}%`,
+              }}
             />
           </div>
 
-          <div className="mt-5">
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-semibold text-slate-600">
-                Participants
-              </span>
+          <div className="mt-3 flex items-center justify-between text-xs font-medium text-slate-400">
+            <span>
+              {season.participants} approved
+            </span>
 
-              <span className="font-extrabold text-slate-950">
-                {season.participants} /{' '}
-                {season.totalParticipants}
-              </span>
-            </div>
-
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
-              <div
-                className="h-full rounded-full bg-emerald-500 transition-all"
-                style={{
-                  width: `${participantProgress}%`,
-                }}
-              />
-            </div>
+            <span>
+              {season.totalParticipants} target
+            </span>
           </div>
         </Card>
 
@@ -245,113 +262,95 @@ function SeasonDetailPage() {
               </p>
             </div>
 
-            <Trophy
-              size={20}
-              className="shrink-0 text-slate-400"
+            <span className="text-sm font-extrabold text-blue-600">
+              {season.currentMatch} /{' '}
+              {season.totalMatches}
+            </span>
+          </div>
+
+          <div className="mt-5 h-3 overflow-hidden rounded-full bg-slate-100">
+            <div
+              className="h-full rounded-full bg-blue-500 transition-all duration-300"
+              style={{
+                width: `${matchProgress}%`,
+              }}
             />
           </div>
 
-          <div className="mt-5">
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-semibold text-slate-600">
-                Matches
-              </span>
+          <div className="mt-3 flex items-center justify-between text-xs font-medium text-slate-400">
+            <span>
+              {season.currentMatch} completed
+            </span>
 
-              <span className="font-extrabold text-slate-950">
-                {season.currentMatch} /{' '}
-                {season.totalMatches}
-              </span>
-            </div>
-
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
-              <div
-                className="h-full rounded-full bg-emerald-500 transition-all"
-                style={{
-                  width: `${matchProgress}%`,
-                }}
-              />
-            </div>
+            <span>
+              {season.totalMatches} total
+            </span>
           </div>
         </Card>
       </div>
 
-      {/* Season Modules */}
+      {/* ==================================================
+          Participants
+      ================================================== */}
+      <SeasonParticipants />
+
+      {/* ==================================================
+          Season Management Modules
+      ================================================== */}
       <Card>
         <div>
-          <p className="text-base font-bold text-slate-950">
+          <p className="text-sm font-bold text-slate-950">
             Season Management
           </p>
 
-          <p className="mt-1 text-sm leading-6 text-slate-500">
-            Semua aktivitas Season akan dikelola dari
-            halaman ini.
+          <p className="mt-1 text-sm text-slate-500">
+            Semua modul yang berhubungan dengan Season
+            akan tersedia dari halaman ini.
           </p>
         </div>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm font-bold text-slate-900">
-              Participants
-            </p>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ModuleCard
+            icon={<Users size={20} />}
+            title="Participants"
+            description="Kelola peserta Season."
+          />
 
-            <p className="mt-1 text-sm text-slate-500">
-              Pendaftaran dan peserta Season.
-            </p>
-          </div>
+          <ModuleCard
+            icon={<Users size={20} />}
+            title="Teams"
+            description="Kelola 4 team Season."
+          />
 
-          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm font-bold text-slate-900">
-              Teams
-            </p>
+          <ModuleCard
+            icon={<Users size={20} />}
+            title="Player Drawing"
+            description="Random assignment pemain ke team."
+          />
 
-            <p className="mt-1 text-sm text-slate-500">
-              Empat team yang bertanding.
-            </p>
-          </div>
+          <ModuleCard
+            icon={<Trophy size={20} />}
+            title="Match Drawing"
+            description="Generate urutan 6 pertandingan."
+          />
 
-          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm font-bold text-slate-900">
-              Player Drawing
-            </p>
+          <ModuleCard
+            icon={<CalendarDays size={20} />}
+            title="Matches"
+            description="Lihat fixture dan status pertandingan."
+          />
 
-            <p className="mt-1 text-sm text-slate-500">
-              Pembagian peserta ke team.
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm font-bold text-slate-900">
-              Match Drawing
-            </p>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Penentuan urutan enam pertandingan.
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm font-bold text-slate-900">
-              Matches
-            </p>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Jadwal dan hasil pertandingan.
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm font-bold text-slate-900">
-              Standings & Awards
-            </p>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Klasemen, statistik, dan penghargaan.
-            </p>
-          </div>
+          <ModuleCard
+            icon={<Trophy size={20} />}
+            title="Standings & Awards"
+            description="Klasemen dan penghargaan Season."
+          />
         </div>
       </Card>
 
-      {/* Temporary Action */}
+      {/* ==================================================
+          Navigation
+      ================================================== */}
       <div className="flex justify-end">
         <Button
           variant="secondary"
@@ -366,5 +365,26 @@ function SeasonDetailPage() {
   )
 }
 
-export default SeasonDetailPage
+function ModuleCard({
+  icon,
+  title,
+  description,
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 transition-colors hover:border-slate-300 hover:bg-white">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-600 shadow-sm">
+        {icon}
+      </div>
 
+      <h3 className="mt-4 font-bold text-slate-900">
+        {title}
+      </h3>
+
+      <p className="mt-1 text-sm leading-5 text-slate-500">
+        {description}
+      </p>
+    </div>
+  )
+}
+
+export default SeasonDetailPage
