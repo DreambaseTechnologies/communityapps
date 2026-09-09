@@ -17,485 +17,345 @@ const PARTICIPANT_STATUS = {
   PENDING: {
     label: 'Pending',
     variant: 'warning',
+    icon: Clock3,
   },
-
   APPROVED: {
     label: 'Approved',
     variant: 'success',
+    icon: CheckCircle2,
   },
-
   REJECTED: {
     label: 'Rejected',
     variant: 'danger',
+    icon: XCircle,
   },
 }
-
-/**
- * ========================================================
- * Mock Player Profiles
- * ========================================================
- *
- * Player profile adalah data yang melekat pada Player.
- *
- * Position TIDAK disimpan di sini karena position
- * merupakan data Season Participation.
- */
-const MOCK_PLAYERS = {
-  'player-01': {
-    id: 'player-01',
-    name: 'Muhammad Rafli',
-    username: '@rafli',
-    avatar: '',
-  },
-
-  'player-02': {
-    id: 'player-02',
-    name: 'Ardiansyah Putra',
-    username: '@ardiansyah',
-    avatar: '',
-  },
-
-  'player-03': {
-    id: 'player-03',
-    name: 'Kevin Wijaya',
-    username: '@kevinw',
-    avatar: '',
-  },
-
-  'player-04': {
-    id: 'player-04',
-    name: 'Yoga Pratama',
-    username: '@yogap',
-    avatar: '',
-  },
-
-  'player-05': {
-    id: 'player-05',
-    name: 'Fajar Ramadhan',
-    username: '@fajar',
-    avatar: '',
-  },
-
-  'player-06': {
-    id: 'player-06',
-    name: 'Dimas Saputra',
-    username: '@dimas',
-    avatar: '',
-  },
-}
-
-/**
- * ========================================================
- * Mock Season Participation
- * ========================================================
- *
- * Ini adalah data yang menghubungkan Player dengan Season.
- *
- * Position berada DI SINI karena setiap Season pemain
- * dapat memilih posisi yang berbeda.
- */
-const MOCK_PARTICIPATIONS = [
-  {
-    id: 'participation-01',
-    seasonId: 'season-08',
-    playerId: 'player-01',
-    status: 'APPROVED',
-    position: 'Goalkeeper',
-    registeredAt: '8 Sep 2026',
-  },
-
-  {
-    id: 'participation-02',
-    seasonId: 'season-08',
-    playerId: 'player-02',
-    status: 'APPROVED',
-    position: 'Outfield',
-    registeredAt: '8 Sep 2026',
-  },
-
-  {
-    id: 'participation-03',
-    seasonId: 'season-08',
-    playerId: 'player-03',
-    status: 'APPROVED',
-    position: 'Outfield',
-    registeredAt: '9 Sep 2026',
-  },
-
-  {
-    id: 'participation-04',
-    seasonId: 'season-08',
-    playerId: 'player-04',
-    status: 'PENDING',
-    position: 'Outfield',
-    registeredAt: '9 Sep 2026',
-  },
-
-  {
-    id: 'participation-05',
-    seasonId: 'season-08',
-    playerId: 'player-05',
-    status: 'APPROVED',
-    position: 'Outfield',
-    registeredAt: '9 Sep 2026',
-  },
-
-  {
-    id: 'participation-06',
-    seasonId: 'season-08',
-    playerId: 'player-06',
-    status: 'REJECTED',
-    position: 'Outfield',
-    registeredAt: '9 Sep 2026',
-  },
-]
 
 const FILTER_OPTIONS = [
   {
     value: 'ALL',
     label: 'All',
   },
-
   {
     value: 'APPROVED',
     label: 'Approved',
   },
-
   {
     value: 'PENDING',
     label: 'Pending',
   },
-
   {
     value: 'REJECTED',
     label: 'Rejected',
   },
 ]
 
-function SeasonParticipants() {
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] =
-    useState('ALL')
-
-  /**
-   * ======================================================
-   * Current Season Participations
-   * ======================================================
-   *
-   * Nantinya seasonId ini berasal dari halaman Season.
-   * Untuk sekarang kita menggunakan Season 08 sebagai mock.
-   */
-  const seasonId = 'season-08'
-
-  const seasonParticipations = useMemo(() => {
-    return MOCK_PARTICIPATIONS
-      .filter(
-        (participation) =>
-          participation.seasonId === seasonId,
-      )
-      .map((participation) => ({
-        ...participation,
-        player:
-          MOCK_PLAYERS[
-            participation.playerId
-          ] ?? null,
-      }))
-      .filter(
-        (participation) =>
-          participation.player !== null,
-      )
-  }, [seasonId])
-
-  const summary = useMemo(() => {
-    return {
-      total: seasonParticipations.length,
-
-      approved:
-        seasonParticipations.filter(
-          (participation) =>
-            participation.status ===
-            'APPROVED',
-        ).length,
-
-      pending:
-        seasonParticipations.filter(
-          (participation) =>
-            participation.status ===
-            'PENDING',
-        ).length,
-
-      rejected:
-        seasonParticipations.filter(
-          (participation) =>
-            participation.status ===
-            'REJECTED',
-        ).length,
-    }
-  }, [seasonParticipations])
-
-  const filteredParticipants = useMemo(() => {
-    const normalizedSearch =
-      search.trim().toLowerCase()
-
-    return seasonParticipations.filter(
-      (participation) => {
-        const player =
-          participation.player
-
-        const matchesSearch =
-          !normalizedSearch ||
-          player.name
-            .toLowerCase()
-            .includes(normalizedSearch) ||
-          player.username
-            .toLowerCase()
-            .includes(normalizedSearch)
-
-        const matchesStatus =
-          statusFilter === 'ALL' ||
-          participation.status ===
-            statusFilter
-
-        return (
-          matchesSearch &&
-          matchesStatus
-        )
-      },
-    )
-  }, [
-    seasonParticipations,
-    search,
-    statusFilter,
-  ])
+function SummaryItem({ label, value, variant }) {
+  const config = PARTICIPANT_STATUS[variant]
+  const Icon = config?.icon
 
   return (
-    <Card>
-      {/* ==================================================
-          Header
-      ================================================== */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-bold text-slate-950">
-            Participants
-          </p>
+          <p className="text-sm font-medium text-slate-500">{label}</p>
 
-          <p className="mt-1 text-sm leading-5 text-slate-500">
-            Peserta yang mendaftar untuk Season ini.
-            Position berlaku khusus untuk Season.
+          <p className="mt-1 text-2xl font-extrabold tracking-tight text-slate-950">
+            {value}
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 sm:flex">
-          <SummaryItem
-            label="Approved"
-            value={summary.approved}
-            icon={
-              <CheckCircle2 size={16} />
-            }
-            variant="success"
-          />
-
-          <SummaryItem
-            label="Pending"
-            value={summary.pending}
-            icon={<Clock3 size={16} />}
-            variant="warning"
-          />
-
-          <SummaryItem
-            label="Rejected"
-            value={summary.rejected}
-            icon={
-              <XCircle size={16} />
-            }
-            variant="danger"
-          />
-        </div>
-      </div>
-
-      {/* ==================================================
-          Filters
-      ================================================== */}
-      <div className="mt-6 flex flex-col gap-3 lg:flex-row">
-        <div className="relative flex-1">
-          <Search
-            size={18}
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-          />
-
-          <input
-            type="search"
-            value={search}
-            onChange={(event) =>
-              setSearch(event.target.value)
-            }
-            placeholder="Search participant..."
-            aria-label="Search participant"
-            className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
-          />
-        </div>
-
-        <div className="flex gap-2 overflow-x-auto pb-1 lg:pb-0">
-          {FILTER_OPTIONS.map(
-            (option) => {
-              const isActive =
-                statusFilter ===
-                option.value
-
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() =>
-                    setStatusFilter(
-                      option.value,
-                    )
-                  }
-                  className={[
-                    'h-11 shrink-0 rounded-xl border px-4 text-sm font-semibold transition',
-                    isActive
-                      ? 'border-slate-900 bg-slate-900 text-white'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50',
-                  ].join(' ')}
-                >
-                  {option.label}
-                </button>
-              )
-            },
-          )}
-        </div>
-      </div>
-
-      {/* ==================================================
-          Participant List
-      ================================================== */}
-      <div className="mt-6">
-        {filteredParticipants.length ===
-        0 ? (
-          <EmptyState
-            icon={<UserRound size={22} />}
-            title="No participants found"
-            description="Tidak ada participant yang sesuai dengan pencarian atau filter."
-          />
-        ) : (
-          <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200">
-            {filteredParticipants.map(
-              (participation) => (
-                <ParticipantRow
-                  key={participation.id}
-                  participation={
-                    participation
-                  }
-                />
-              ),
-            )}
+        {Icon ? (
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-600">
+            <Icon size={19} strokeWidth={2} aria-hidden="true" />
           </div>
-        )}
+        ) : null}
       </div>
-    </Card>
+    </div>
   )
 }
 
 function ParticipantRow({
   participation,
+  canManage,
+  onApprove,
+  onReject,
 }) {
   const player = participation.player
 
-  const status =
-    PARTICIPANT_STATUS[
-      participation.status
-    ] ?? PARTICIPANT_STATUS.PENDING
+  const statusConfig =
+    PARTICIPANT_STATUS[participation.status] ?? PARTICIPANT_STATUS.PENDING
+
+  const isPending = participation.status === 'PENDING'
 
   return (
-    <div className="flex flex-col gap-4 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-      <div className="flex min-w-0 items-center gap-3">
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-slate-300">
+      <div className="flex items-start gap-3">
         <Avatar
           src={player.avatar}
           name={player.name}
           size="md"
         />
 
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="truncate font-bold text-slate-900">
-              {player.name}
-            </p>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="truncate font-bold text-slate-950">
+                  {player.name}
+                </h3>
 
-            <Badge variant={status.variant}>
-              {status.label}
-            </Badge>
+                <Badge variant={statusConfig.variant}>
+                  {statusConfig.label}
+                </Badge>
+              </div>
+
+              <p className="mt-0.5 text-sm text-slate-500">
+                {player.username}
+              </p>
+            </div>
+
+            {canManage && isPending ? (
+              <div className="flex shrink-0 gap-2">
+                <button
+                  type="button"
+                  onClick={() => onApprove?.(participation.id)}
+                  className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-sm font-bold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                  aria-label={`Approve ${player.name}`}
+                >
+                  <CheckCircle2 size={16} strokeWidth={2.25} aria-hidden="true" />
+                  <span>Approve</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onReject?.(participation.id)}
+                  className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 text-sm font-bold text-red-700 transition hover:border-red-300 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+                  aria-label={`Reject ${player.name}`}
+                >
+                  <XCircle size={16} strokeWidth={2.25} aria-hidden="true" />
+                  <span>Reject</span>
+                </button>
+              </div>
+            ) : null}
           </div>
 
-          <p className="mt-0.5 text-sm text-slate-500">
-            {player.username}
-          </p>
-        </div>
-      </div>
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                Position
+              </p>
 
-      <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:flex sm:items-center">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-            Current Season Position
-          </p>
+              <p className="mt-1 text-sm font-semibold text-slate-700">
+                {participation.position}
+              </p>
+            </div>
 
-          <p className="mt-0.5 font-semibold text-slate-700">
-            {participation.position}
-          </p>
-        </div>
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                Registered
+              </p>
 
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-            Registered
-          </p>
+              <p className="mt-1 text-sm font-semibold text-slate-700">
+                {participation.registeredAt}
+              </p>
+            </div>
 
-          <p className="mt-0.5 font-semibold text-slate-700">
-            {participation.registeredAt}
-          </p>
+            <div className="col-span-2 sm:col-span-1">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                Season Position
+              </p>
+
+              <p className="mt-1 text-sm font-semibold text-slate-700">
+                {participation.position}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   )
 }
 
-function SummaryItem({
-  label,
-  value,
-  icon,
-  variant,
+function SeasonParticipants({
+  seasonId,
+  participations = [],
+  canManage = false,
+  onApprove,
+  onReject,
 }) {
-  const variantClasses = {
-    success:
-      'bg-emerald-50 text-emerald-700',
+  const [search, setSearch] = useState('')
+  const [activeFilter, setActiveFilter] = useState('ALL')
 
-    warning:
-      'bg-amber-50 text-amber-700',
+  const seasonParticipations = useMemo(() => {
+    if (!seasonId) {
+      return []
+    }
 
-    danger:
-      'bg-red-50 text-red-700',
-  }
+    return participations.filter(
+      (participation) => participation.seasonId === seasonId,
+    )
+  }, [participations, seasonId])
+
+  const summary = useMemo(() => {
+    return {
+      approved: seasonParticipations.filter(
+        (participation) => participation.status === 'APPROVED',
+      ).length,
+
+      pending: seasonParticipations.filter(
+        (participation) => participation.status === 'PENDING',
+      ).length,
+
+      rejected: seasonParticipations.filter(
+        (participation) => participation.status === 'REJECTED',
+      ).length,
+    }
+  }, [seasonParticipations])
+
+  const filteredParticipations = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase()
+
+    return seasonParticipations.filter((participation) => {
+      const player = participation.player
+
+      if (!player) {
+        return false
+      }
+
+      const matchesSearch =
+        !normalizedSearch ||
+        player.name.toLowerCase().includes(normalizedSearch) ||
+        player.username.toLowerCase().includes(normalizedSearch)
+
+      const matchesStatus =
+        activeFilter === 'ALL' ||
+        participation.status === activeFilter
+
+      return matchesSearch && matchesStatus
+    })
+  }, [activeFilter, search, seasonParticipations])
 
   return (
-    <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 sm:min-w-28">
-      <div className="flex items-center gap-1.5">
-        <span
-          className={[
-            'flex h-6 w-6 items-center justify-center rounded-lg',
-            variantClasses[variant] ??
-              variantClasses.success,
-          ].join(' ')}
-        >
-          {icon}
-        </span>
+    <section className="mt-8">
+      <div>
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-600">
+          Registration
+        </p>
 
-        <span className="text-xs font-semibold text-slate-500">
-          {label}
-        </span>
+        <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-2xl font-extrabold tracking-tight text-slate-950">
+              Participants
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Daftar pemain yang terdaftar pada Season ini.
+            </p>
+          </div>
+
+          <div className="text-sm font-semibold text-slate-500">
+            {seasonParticipations.length} participants
+          </div>
+        </div>
       </div>
 
-      <p className="mt-1 text-lg font-extrabold text-slate-950">
-        {value}
-      </p>
-    </div>
+      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        <SummaryItem
+          label="Approved"
+          value={summary.approved}
+          variant="APPROVED"
+        />
+
+        <SummaryItem
+          label="Pending"
+          value={summary.pending}
+          variant="PENDING"
+        />
+
+        <SummaryItem
+          label="Rejected"
+          value={summary.rejected}
+          variant="REJECTED"
+        />
+      </div>
+
+      <Card className="mt-5 overflow-hidden p-0">
+        <div className="border-b border-slate-200 p-4 sm:p-5">
+          <div className="relative">
+            <Search
+              size={18}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              aria-hidden="true"
+            />
+
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search player..."
+              aria-label="Search participants"
+              className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/10"
+            />
+          </div>
+
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+            {FILTER_OPTIONS.map((option) => {
+              const isActive = activeFilter === option.value
+
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setActiveFilter(option.value)}
+                  className={[
+                    'shrink-0 rounded-xl px-4 py-2 text-sm font-bold transition',
+                    isActive
+                      ? 'bg-slate-950 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+                  ].join(' ')}
+                  aria-pressed={isActive}
+                >
+                  {option.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="space-y-3 p-4 sm:p-5">
+          {filteredParticipations.length > 0 ? (
+            filteredParticipations.map((participation) => (
+              <ParticipantRow
+                key={participation.id}
+                participation={participation}
+                canManage={canManage}
+                onApprove={onApprove}
+                onReject={onReject}
+              />
+            ))
+          ) : (
+            <EmptyState
+              icon={
+                seasonParticipations.length === 0
+                  ? UserRound
+                  : Search
+              }
+              title={
+                seasonParticipations.length === 0
+                  ? 'No participants yet'
+                  : 'No participants found'
+              }
+              description={
+                seasonParticipations.length === 0
+                  ? 'Belum ada pemain yang terdaftar pada Season ini.'
+                  : 'Coba ubah kata pencarian atau filter status.'
+              }
+            />
+          )}
+        </div>
+      </Card>
+    </section>
   )
 }
 
