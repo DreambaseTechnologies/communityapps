@@ -55,6 +55,11 @@ a {
   text-decoration: none;
 }
 
+:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 3px;
+}
+
 @keyframes slideIn {
   from {
     opacity: 0;

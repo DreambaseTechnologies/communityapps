@@ -1,453 +1,1272 @@
-
+import { useMemo, useState } from "react";
 import {
+  ArrowLeft,
   CalendarDays,
-  ChevronLeft,
   Clock3,
   MapPin,
   Trophy,
   Users,
-} from 'lucide-react'
-import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+} from "lucide-react";
+import { Link, useParams } from "react-router-dom";
 
-import SeasonParticipants from '../../components/common/SeasonParticipants'
-import Badge from '../../components/ui/Badge'
-import Card from '../../components/ui/Card'
+import Badge from "../../components/ui/Badge";
+import Card from "../../components/ui/Card";
+import TeamDrawing from "../../components/common/TeamDrawing";
+import SeasonParticipants from "../../components/common/SeasonParticipants";
+import DrawingEligibilityCard from "../../components/common/DrawingEligibilityCard";
+
 import {
   COMMUNITY_PERMISSIONS,
   COMMUNITY_ROLES,
   hasCommunityPermission,
-} from '../../utils/communityPermissions'
+} from "../../utils/communityPermissions";
 
-const MOCK_CURRENT_USER_ROLE = COMMUNITY_ROLES.OWNER
+/**
+ * ========================================================
+ * MOCK CURRENT USER
+ * ========================================================
+ */
 
-const MOCK_SEASONS = {
-  'season-08': {
-    id: 'season-08',
-    name: 'Season 08',
-    status: 'ONGOING',
-    date: '14 Sep 2026',
-    startTime: '19:30',
-    location: 'Garuda Arena',
-    description:
-      'Fourfeo community dengan format 4 team dan 6 pertandingan.',
-    participants: 48,
-    totalParticipants: 48,
-    currentMatch: 4,
-    totalMatches: 6,
-  },
-}
+const MOCK_CURRENT_USER_ROLE =
+  COMMUNITY_ROLES.OWNER;
 
-const MOCK_PLAYERS = {
-  'player-01': {
-    id: 'player-01',
-    name: 'Muhammad Rafli',
-    username: '@rafli',
-    avatar: '',
+const MOCK_CURRENT_PLAYER = {
+  id: "player-01",
+  name: "Muhammad Rafli",
+  username: "@rafli",
+};
+
+/**
+ * ========================================================
+ * MOCK PLAYERS
+ * ========================================================
+ *
+ * Player adalah entity tersendiri.
+ *
+ * Position TIDAK disimpan di Player.
+ * Position berada di Season Participation.
+ * ========================================================
+ */
+
+const BASE_PLAYERS = [
+  {
+    id: "player-01",
+    name: "Muhammad Rafli",
+    username: "@rafli",
   },
-  'player-02': {
-    id: 'player-02',
-    name: 'Ardiansyah Putra',
-    username: '@ardiansyah',
-    avatar: '',
+  {
+    id: "player-02",
+    name: "Ardiansyah Putra",
+    username: "@ardiansyah",
   },
-  'player-03': {
-    id: 'player-03',
-    name: 'Kevin Wijaya',
-    username: '@kevinw',
-    avatar: '',
+  {
+    id: "player-03",
+    name: "Kevin Wijaya",
+    username: "@kevinw",
   },
-  'player-04': {
-    id: 'player-04',
-    name: 'Yoga Pratama',
-    username: '@yogap',
-    avatar: '',
+  {
+    id: "player-04",
+    name: "Yoga Pratama",
+    username: "@yogap",
   },
-  'player-05': {
-    id: 'player-05',
-    name: 'Fajar Ramadhan',
-    username: '@fajar',
-    avatar: '',
+  {
+    id: "player-05",
+    name: "Fajar Ramadhan",
+    username: "@fajar",
   },
-  'player-06': {
-    id: 'player-06',
-    name: 'Dimas Saputra',
-    username: '@dimas',
-    avatar: '',
+  {
+    id: "player-06",
+    name: "Dimas Saputra",
+    username: "@dimas",
   },
-}
+];
+
+const DEVELOPMENT_PLAYERS = Array.from(
+  { length: 37 },
+  (_, index) => {
+    const number = String(
+      index + 7,
+    ).padStart(2, "0");
+
+    return {
+      id: `player-${number}`,
+      name: `Development Player ${number}`,
+      username: `@player${number}`,
+    };
+  },
+);
+
+const MOCK_PLAYERS = [
+  ...BASE_PLAYERS,
+  ...DEVELOPMENT_PLAYERS,
+];
+
+/**
+ * ========================================================
+ * MOCK PARTICIPATIONS
+ * ========================================================
+ *
+ * Position disimpan di participation.
+ * ========================================================
+ */
 
 const INITIAL_PARTICIPATIONS = [
   {
-    id: 'participation-01',
-    seasonId: 'season-08',
-    playerId: 'player-01',
-    status: 'APPROVED',
-    position: 'Goalkeeper',
-    registeredAt: '8 Sep 2026',
+    id: "participation-01",
+    seasonId: "season-08",
+    playerId: "player-01",
+    status: "REJECTED",
+    position: "GK",
+    registeredAt: "2026-09-08",
   },
   {
-    id: 'participation-02',
-    seasonId: 'season-08',
-    playerId: 'player-02',
-    status: 'APPROVED',
-    position: 'Outfield',
-    registeredAt: '8 Sep 2026',
+    id: "participation-02",
+    seasonId: "season-08",
+    playerId: "player-02",
+    status: "APPROVED",
+    position: "DEF",
+    registeredAt: "2026-09-08",
   },
   {
-    id: 'participation-03',
-    seasonId: 'season-08',
-    playerId: 'player-03',
-    status: 'APPROVED',
-    position: 'Outfield',
-    registeredAt: '9 Sep 2026',
+    id: "participation-03",
+    seasonId: "season-08",
+    playerId: "player-03",
+    status: "APPROVED",
+    position: "MID",
+    registeredAt: "2026-09-09",
   },
   {
-    id: 'participation-04',
-    seasonId: 'season-08',
-    playerId: 'player-04',
-    status: 'PENDING',
-    position: 'Outfield',
-    registeredAt: '9 Sep 2026',
+    id: "participation-04",
+    seasonId: "season-08",
+    playerId: "player-04",
+    status: "PENDING",
+    position: "FW",
+    registeredAt: "2026-09-09",
   },
   {
-    id: 'participation-05',
-    seasonId: 'season-08',
-    playerId: 'player-05',
-    status: 'APPROVED',
-    position: 'Outfield',
-    registeredAt: '9 Sep 2026',
+    id: "participation-05",
+    seasonId: "season-08",
+    playerId: "player-05",
+    status: "APPROVED",
+    position: "FW",
+    registeredAt: "2026-09-09",
   },
   {
-    id: 'participation-06',
-    seasonId: 'season-08',
-    playerId: 'player-06',
-    status: 'REJECTED',
-    position: 'Outfield',
-    registeredAt: '9 Sep 2026',
+    id: "participation-06",
+    seasonId: "season-08",
+    playerId: "player-06",
+    status: "REJECTED",
+    position: "DEF",
+    registeredAt: "2026-09-09",
   },
-]
 
-const STATUS_CONFIG = {
-  DRAFT: {
-    label: 'Draft',
-    variant: 'neutral',
+  /**
+   * ======================================================
+   * DEVELOPMENT APPROVED PARTICIPATIONS
+   * ======================================================
+   *
+   * 37 tambahan + 3 approved base = 40 approved.
+   * ======================================================
+   */
+
+  ...DEVELOPMENT_PLAYERS.map(
+    (player, index) => {
+      const positions = [
+        "GK",
+        "DEF",
+        "MID",
+        "FW",
+      ];
+
+      return {
+        id: `participation-dev-${String(
+          index + 1,
+        ).padStart(2, "0")}`,
+        seasonId: "season-08",
+        playerId: player.id,
+        status: "APPROVED",
+        position:
+          positions[index % positions.length],
+        registeredAt: "2026-09-09",
+      };
+    },
+  ),
+];
+
+/**
+ * ========================================================
+ * INITIAL TEAMS
+ * ========================================================
+ */
+
+const INITIAL_TEAMS = [
+  {
+    id: "team-a",
+    name: "Garuda FC",
+    logo: null,
+    roster: [],
   },
-  REGISTRATION_OPEN: {
-    label: 'Registration Open',
-    variant: 'success',
+  {
+    id: "team-b",
+    name: "Bali United",
+    logo: null,
+    roster: [],
   },
-  REGISTRATION_CLOSED: {
-    label: 'Registration Closed',
-    variant: 'warning',
+  {
+    id: "team-c",
+    name: "Persija",
+    logo: null,
+    roster: [],
   },
-  DRAWING: {
-    label: 'Drawing',
-    variant: 'info',
+  {
+    id: "team-d",
+    name: "Persebaya",
+    logo: null,
+    roster: [],
   },
-  ONGOING: {
-    label: 'Ongoing',
-    variant: 'success',
+];
+
+/**
+ * ========================================================
+ * MOCK SEASON
+ * ========================================================
+ */
+
+const INITIAL_SEASON = {
+  id: "season-08",
+  communityId: "community-1",
+  name: "Season 08",
+  status: "REGISTRATION_CLOSED",
+
+  date: "2026-09-14",
+  startTime: "19:30",
+  location: "Garuda Arena",
+
+  description:
+    "Fourfeo minisoccer Season 08.",
+
+  banner: null,
+
+  totalParticipants: 64,
+
+  teams: INITIAL_TEAMS,
+
+  matchProgress: {
+    current: 0,
+    total: 6,
   },
-  FINISHED: {
-    label: 'Finished',
-    variant: 'neutral',
-  },
+};
+
+/**
+ * ========================================================
+ * FORMATTERS
+ * ========================================================
+ */
+
+function formatDate(
+  value,
+) {
+  if (!value) {
+    return "-";
+  }
+
+  const date = new Date(
+    `${value}T00:00:00`,
+  );
+
+  if (
+    Number.isNaN(
+      date.getTime(),
+    )
+  ) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat(
+    "id-ID",
+    {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    },
+  ).format(date);
 }
 
-function InfoCard({ icon: Icon, label, value }) {
+function formatStatus(
+  status,
+) {
+  const labels = {
+    DRAFT: "Draft",
+    REGISTRATION_OPEN:
+      "Registration Open",
+    REGISTRATION_CLOSED:
+      "Registration Closed",
+    DRAWING: "Drawing",
+    ONGOING: "Ongoing",
+    FINISHED: "Finished",
+  };
+
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4">
-      <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-          <Icon size={19} strokeWidth={2} aria-hidden="true" />
-        </div>
-
-        <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-            {label}
-          </p>
-
-          <p className="mt-1 truncate text-sm font-bold text-slate-900">
-            {value}
-          </p>
-        </div>
-      </div>
-    </div>
-  )
+    labels[status] ??
+    status
+  );
 }
 
-function ProgressCard({ label, current, total, description }) {
-  const percentage =
-    total > 0 ? Math.min(Math.round((current / total) * 100), 100) : 0
+/**
+ * ========================================================
+ * STATUS BADGE
+ * ========================================================
+ */
+
+function SeasonStatusBadge({
+  status,
+}) {
+  const variants = {
+    DRAFT: "default",
+    REGISTRATION_OPEN:
+      "success",
+    REGISTRATION_CLOSED:
+      "warning",
+    DRAWING: "warning",
+    ONGOING: "success",
+    FINISHED: "default",
+  };
 
   return (
-    <Card>
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-semibold text-slate-500">{label}</p>
-
-          <p className="mt-1 text-2xl font-extrabold tracking-tight text-slate-950">
-            {current}
-            <span className="text-base font-bold text-slate-400">
-              {' '}
-              / {total}
-            </span>
-          </p>
-        </div>
-
-        <span className="text-sm font-extrabold text-emerald-600">
-          {percentage}%
-        </span>
-      </div>
-
-      <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
-        <div
-          className="h-full rounded-full bg-emerald-500 transition-all"
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
-
-      <p className="mt-3 text-sm text-slate-500">{description}</p>
-    </Card>
-  )
+    <Badge
+      variant={
+        variants[status] ??
+        "default"
+      }
+    >
+      {formatStatus(status)}
+    </Badge>
+  );
 }
 
-function ManagementCard({
+/**
+ * ========================================================
+ * INFO ITEM
+ * ========================================================
+ */
+
+function InfoItem({
   icon: Icon,
-  title,
-  description,
-  status = 'Coming Soon',
+  label,
+  value,
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-slate-300 hover:shadow-sm">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
-          <Icon size={20} strokeWidth={2} aria-hidden="true" />
-        </div>
-
-        <Badge variant="neutral">{status}</Badge>
+    <div className="flex items-start gap-3">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+        <Icon size={17} />
       </div>
 
-      <h3 className="mt-4 font-bold text-slate-950">{title}</h3>
+      <div className="min-w-0">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+          {label}
+        </p>
 
-      <p className="mt-1 text-sm leading-6 text-slate-500">
-        {description}
-      </p>
+        <p className="mt-1 text-sm font-bold text-slate-800">
+          {value}
+        </p>
+      </div>
     </div>
-  )
+  );
 }
 
+/**
+ * ========================================================
+ * MAIN PAGE
+ * ========================================================
+ */
+
 function SeasonDetailPage() {
-  const { seasonId } = useParams()
-  const navigate = useNavigate()
+  const { seasonId } =
+    useParams();
 
-  const [participations, setParticipations] = useState(
+  /**
+   * ======================================================
+   * SEASON STATE
+   * ======================================================
+   *
+   * Season menjadi owner dari data team + roster.
+   * ======================================================
+   */
+
+  const [
+    season,
+    setSeason,
+  ] = useState(() => ({
+    ...INITIAL_SEASON,
+    id:
+      seasonId ??
+      INITIAL_SEASON.id,
+    teams: INITIAL_TEAMS.map(
+      (team) => ({
+        ...team,
+        roster: [],
+      }),
+    ),
+  }));
+
+  const [
+    participations,
+    setParticipations,
+  ] = useState(
     INITIAL_PARTICIPATIONS,
-  )
+  );
 
-  const season =
-    MOCK_SEASONS[seasonId] ?? MOCK_SEASONS['season-08']
+  const [
+    drawingLocked,
+    setDrawingLocked,
+  ] = useState(false);
 
-  const statusConfig =
-    STATUS_CONFIG[season.status] ?? STATUS_CONFIG.DRAFT
+  /**
+   * ======================================================
+   * PERMISSION
+   * ======================================================
+   */
 
-  const canManageParticipants = hasCommunityPermission(
-    MOCK_CURRENT_USER_ROLE,
-    COMMUNITY_PERMISSIONS.MANAGE_SEASONS,
-  )
+  const canManageParticipants =
+    hasCommunityPermission(
+      MOCK_CURRENT_USER_ROLE,
+      COMMUNITY_PERMISSIONS
+        .MANAGE_SEASONS,
+    );
 
-  const seasonParticipations = participations.map((participation) => ({
-    ...participation,
-    player: MOCK_PLAYERS[participation.playerId] ?? null,
-  }))
+  /**
+   * ======================================================
+   * PARTICIPATION COUNTS
+   * ======================================================
+   */
 
-  const handleUpdateParticipantStatus = (participationId, status) => {
-    if (!canManageParticipants) {
-      return
+  const approvedParticipations =
+    useMemo(
+      () =>
+        participations.filter(
+          (participation) =>
+            participation.status ===
+            "APPROVED",
+        ),
+      [participations],
+    );
+
+  const pendingParticipations =
+    useMemo(
+      () =>
+        participations.filter(
+          (participation) =>
+            participation.status ===
+            "PENDING",
+        ),
+      [participations],
+    );
+
+  const rejectedParticipations =
+    useMemo(
+      () =>
+        participations.filter(
+          (participation) =>
+            participation.status ===
+            "REJECTED",
+        ),
+      [participations],
+    );
+
+  const approvedCount =
+    approvedParticipations.length;
+
+  const pendingCount =
+    pendingParticipations.length;
+
+  const rejectedCount =
+    rejectedParticipations.length;
+
+  /**
+   * ======================================================
+   * PLAYER MAP
+   * ======================================================
+   */
+
+  const playersById = useMemo(
+    () =>
+      Object.fromEntries(
+        MOCK_PLAYERS.map(
+          (player) => [
+            player.id,
+            player,
+          ],
+        ),
+      ),
+    [],
+  );
+
+  /**
+   * ======================================================
+   * REGISTRATION STATE
+   * ======================================================
+   */
+
+  const registrationState =
+    useMemo(() => {
+      if (
+        drawingLocked
+      ) {
+        return {
+          canRegister: false,
+          code: "DRAWING_LOCKED",
+          reason:
+            "Drawing sudah dikunci.",
+        };
+      }
+
+      if (
+        season.status !==
+        "REGISTRATION_OPEN"
+      ) {
+        return {
+          canRegister: false,
+          code: "REGISTRATION_CLOSED",
+          reason:
+            "Registration sedang tidak dibuka.",
+        };
+      }
+
+      const currentParticipation =
+        participations.find(
+          (participation) =>
+            participation.playerId ===
+              MOCK_CURRENT_PLAYER.id &&
+            participation.seasonId ===
+              season.id &&
+            (
+              participation.status ===
+                "PENDING" ||
+              participation.status ===
+                "APPROVED"
+            ),
+        );
+
+      if (
+        currentParticipation
+      ) {
+        return {
+          canRegister: false,
+          code: "ALREADY_REGISTERED",
+          reason:
+            "Player sudah memiliki registration aktif di Season ini.",
+        };
+      }
+
+      if (
+        approvedCount >=
+        season.totalParticipants
+      ) {
+        return {
+          canRegister: false,
+          code: "CAPACITY_FULL",
+          reason:
+            "Kapasitas participant sudah penuh.",
+        };
+      }
+
+      return {
+        canRegister: true,
+        code: "READY",
+        reason:
+          "Player dapat melakukan registration.",
+      };
+    }, [
+      approvedCount,
+      drawingLocked,
+      participations,
+      season.id,
+      season.status,
+      season.totalParticipants,
+    ]);
+
+  /**
+   * ======================================================
+   * REGISTER PLAYER
+   * ======================================================
+   */
+
+  const handleRegister = ({
+    position,
+  }) => {
+    if (
+      !registrationState.canRegister
+    ) {
+      return;
     }
 
-    setParticipations((currentParticipations) =>
-      currentParticipations.map((participation) => {
-        if (participation.id !== participationId) {
-          return participation
-        }
+    const duplicate =
+      participations.some(
+        (participation) =>
+          participation.playerId ===
+            MOCK_CURRENT_PLAYER.id &&
+          participation.seasonId ===
+            season.id &&
+          (
+            participation.status ===
+              "PENDING" ||
+            participation.status ===
+              "APPROVED"
+          ),
+      );
 
-        return {
-          ...participation,
-          status,
-        }
+    if (duplicate) {
+      return;
+    }
+
+    if (
+      approvedCount >=
+      season.totalParticipants
+    ) {
+      return;
+    }
+
+    const rejectedParticipation =
+      participations.find(
+        (participation) =>
+          participation.playerId ===
+            MOCK_CURRENT_PLAYER.id &&
+          participation.seasonId ===
+            season.id &&
+          participation.status ===
+            "REJECTED",
+      );
+
+    if (
+      rejectedParticipation
+    ) {
+      setParticipations(
+        (current) =>
+          current.map(
+            (
+              participation,
+            ) =>
+              participation.id ===
+              rejectedParticipation.id
+                ? {
+                    ...participation,
+                    status: "PENDING",
+                    position,
+                    registeredAt:
+                      new Date()
+                        .toISOString()
+                        .slice(
+                          0,
+                          10,
+                        ),
+                  }
+                : participation,
+          ),
+      );
+
+      return;
+    }
+
+    setParticipations(
+      (current) => [
+        ...current,
+        {
+          id: `participation-${Date.now()}`,
+          seasonId: season.id,
+          playerId:
+            MOCK_CURRENT_PLAYER.id,
+          status: "PENDING",
+          position,
+          registeredAt:
+            new Date()
+              .toISOString()
+              .slice(
+                0,
+                10,
+              ),
+        },
+      ],
+    );
+  };
+
+  /**
+   * ======================================================
+   * UPDATE PARTICIPANT STATUS
+   * ======================================================
+   */
+
+  const handleUpdateParticipantStatus =
+    (
+      participationId,
+      status,
+    ) => {
+      if (
+        !canManageParticipants
+      ) {
+        return;
+      }
+
+      if (
+        drawingLocked
+      ) {
+        return;
+      }
+
+      if (
+        ![
+          "APPROVED",
+          "REJECTED",
+        ].includes(status)
+      ) {
+        return;
+      }
+
+      setParticipations(
+        (current) =>
+          current.map(
+            (
+              participation,
+            ) =>
+              participation.id ===
+              participationId
+                ? {
+                    ...participation,
+                    status,
+                  }
+                : participation,
+          ),
+      );
+    };
+
+  /**
+   * ======================================================
+   * TEAM STATE PERSISTENCE
+   * ======================================================
+   *
+   * Dipanggil oleh TeamDrawing setiap kali:
+   *
+   * - nama team berubah
+   * - roster player bertambah
+   * - drawing dimulai
+   *
+   * Dengan demikian TeamDrawing tidak menjadi
+   * owner data Season.
+   * ======================================================
+   */
+
+  const handleTeamsChange = (
+    nextTeams,
+  ) => {
+    if (
+      drawingLocked
+    ) {
+      return;
+    }
+
+    setSeason(
+      (currentSeason) => ({
+        ...currentSeason,
+        teams: nextTeams.map(
+          (team) => ({
+            ...team,
+            roster:
+              Array.isArray(
+                team.roster,
+              )
+                ? [
+                    ...team.roster,
+                  ]
+                : [],
+          }),
+        ),
       }),
-    )
-  }
+    );
+  };
 
-  const handleApproveParticipant = (participationId) => {
-    handleUpdateParticipantStatus(participationId, 'APPROVED')
-  }
+  /**
+   * ======================================================
+   * DRAWING COMPLETE
+   * ======================================================
+   *
+   * Ini adalah commit final hasil drawing.
+   * ======================================================
+   */
 
-  const handleRejectParticipant = (participationId) => {
-    handleUpdateParticipantStatus(participationId, 'REJECTED')
-  }
+  const handleDrawingComplete =
+    (
+      drawingResult,
+    ) => {
+      if (
+        !canManageParticipants
+      ) {
+        return;
+      }
+
+      if (
+        drawingLocked
+      ) {
+        return;
+      }
+
+      const normalizedTeams =
+        drawingResult.map(
+          (team) => ({
+            ...team,
+            roster:
+              Array.isArray(
+                team.roster,
+              )
+                ? [
+                    ...team.roster,
+                  ]
+                : [],
+          }),
+        );
+
+      /**
+       * Persist final roster ke Season.
+       */
+      setSeason(
+        (currentSeason) => ({
+          ...currentSeason,
+          teams:
+            normalizedTeams,
+        }),
+      );
+
+      /**
+       * Drawing sudah tidak boleh
+       * diulang / dimodifikasi.
+       */
+      setDrawingLocked(
+        true,
+      );
+    };
+
+  /**
+   * ======================================================
+   * TEAM ROSTER SUMMARY
+   * ======================================================
+   */
+
+  const totalAssignedPlayers =
+    useMemo(
+      () =>
+        season.teams.reduce(
+          (total, team) =>
+            total +
+            (
+              Array.isArray(
+                team.roster,
+              )
+                ? team.roster
+                    .length
+                : 0
+            ),
+          0,
+        ),
+      [season.teams],
+    );
+
+  /**
+   * ======================================================
+   * MATCH PROGRESS
+   * ======================================================
+   */
+
+  const matchProgress =
+    season.matchProgress ??
+    {
+      current: 0,
+      total: 6,
+    };
+
+  const matchProgressPercent =
+    matchProgress.total >
+    0
+      ? Math.round(
+          (matchProgress.current /
+            matchProgress.total) *
+            100,
+        )
+      : 0;
+
+  /**
+   * ======================================================
+   * RENDER
+   * ======================================================
+   */
 
   return (
-    <div className="mx-auto w-full max-w-6xl pb-24">
-      <button
-        type="button"
-        onClick={() => navigate('/community')}
-        className="mb-5 inline-flex items-center gap-2 rounded-lg text-sm font-bold text-slate-600 transition hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
+    <div className="space-y-6 pb-10">
+      {/* ==================================================
+          BACK
+          ================================================== */}
+
+      <Link
+        to="/community"
+        className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 transition hover:text-slate-900"
       >
-        <ChevronLeft size={18} aria-hidden="true" />
+        <ArrowLeft size={17} />
         Back to Community
-      </button>
+      </Link>
 
-      <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-6 text-white shadow-sm sm:p-8">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
+      {/* ==================================================
+          HEADER
+          ================================================== */}
+
+      <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
+        <div className="relative min-h-[220px] bg-slate-950">
+          {season.banner ? (
+            <img
+              src={season.banner}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover opacity-70"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-950 via-slate-950 to-slate-900" />
+          )}
+
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
+
+          <div className="relative flex min-h-[220px] flex-col justify-end p-5 sm:p-7">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant={statusConfig.variant}>
-                {statusConfig.label}
-              </Badge>
+              <SeasonStatusBadge
+                status={
+                  season.status
+                }
+              />
 
-              <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-white/80">
-                Season
-              </span>
+              {drawingLocked && (
+                <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-bold text-white backdrop-blur">
+                  Drawing Locked
+                </span>
+              )}
             </div>
 
-            <h1 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">
+            <h1 className="mt-4 text-3xl font-black tracking-tight text-white sm:text-4xl">
               {season.name}
             </h1>
 
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
               {season.description}
             </p>
           </div>
+        </div>
 
-          <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-            <Trophy
-              size={22}
-              className="text-emerald-400"
-              aria-hidden="true"
-            />
+        {/* ==================================================
+            SEASON INFO
+            ================================================== */}
+
+        <div className="grid gap-5 p-5 sm:grid-cols-2 sm:p-7 lg:grid-cols-4">
+          <InfoItem
+            icon={CalendarDays}
+            label="Date"
+            value={formatDate(
+              season.date,
+            )}
+          />
+
+          <InfoItem
+            icon={Clock3}
+            label="Start Time"
+            value={`${season.startTime} WIB`}
+          />
+
+          <InfoItem
+            icon={MapPin}
+            label="Location"
+            value={
+              season.location ||
+              "-"
+            }
+          />
+
+          <InfoItem
+            icon={Users}
+            label="Participants"
+            value={`${approvedCount} / ${season.totalParticipants}`}
+          />
+        </div>
+      </section>
+
+      {/* ==================================================
+          QUICK SUMMARY
+          ================================================== */}
+
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <Users size={19} />
+            </div>
 
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                Competition
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Approved
               </p>
 
-              <p className="mt-1 text-sm font-bold text-white">
-                4 Teams · 6 Matches
+              <p className="mt-1 text-2xl font-black text-slate-950">
+                {approvedCount}
               </p>
             </div>
           </div>
+        </Card>
+
+        <Card>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+              <Users size={19} />
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Pending
+              </p>
+
+              <p className="mt-1 text-2xl font-black text-slate-950">
+                {pendingCount}
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        <Card>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <Users size={19} />
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Assigned
+              </p>
+
+              <p className="mt-1 text-2xl font-black text-slate-950">
+                {totalAssignedPlayers}
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        <Card>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+              <Trophy size={19} />
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Matches
+              </p>
+
+              <p className="mt-1 text-2xl font-black text-slate-950">
+                {matchProgress.current} /{" "}
+                {matchProgress.total}
+              </p>
+            </div>
+          </div>
+        </Card>
+      </section>
+
+      {/* ==================================================
+          MATCH PROGRESS
+          ================================================== */}
+
+      <Card>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+              Competition Progress
+            </p>
+
+            <h2 className="mt-1 text-lg font-extrabold tracking-tight text-slate-950">
+              Match Progress
+            </h2>
+          </div>
+
+          <p className="text-sm font-bold text-slate-600">
+            {matchProgress.current}{" "}
+            of{" "}
+            {matchProgress.total}{" "}
+            matches
+          </p>
         </div>
-      </section>
 
-      <section className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <InfoCard
-          icon={CalendarDays}
-          label="Date"
-          value={season.date}
-        />
+        <div className="mt-5 h-3 overflow-hidden rounded-full bg-slate-100">
+          <div
+            className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+            style={{
+              width: `${matchProgressPercent}%`,
+            }}
+          />
+        </div>
+      </Card>
 
-        <InfoCard
-          icon={Clock3}
-          label="Start Time"
-          value={season.startTime}
-        />
+      {/* ==================================================
+          DRAWING ELIGIBILITY
+          ================================================== */}
 
-        <InfoCard
-          icon={MapPin}
-          label="Location"
-          value={season.location}
-        />
+      <DrawingEligibilityCard
+        approvedCount={
+          approvedCount
+        }
+        maximumParticipants={
+          season.totalParticipants
+        }
+        seasonStatus={
+          season.status
+        }
+      />
 
-        <InfoCard
-          icon={Users}
-          label="Participants"
-          value={`${season.participants} / ${season.totalParticipants}`}
-        />
-      </section>
+      {/* ==================================================
+          TEAM DRAWING
+          ================================================== */}
 
-      <section className="mt-5 grid gap-4 md:grid-cols-2">
-        <ProgressCard
-          label="Participant Registration"
-          current={season.participants}
-          total={season.totalParticipants}
-          description="Jumlah peserta yang sudah terdaftar pada Season ini."
-        />
+      <TeamDrawing
+        seasonStatus={
+          season.status
+        }
+        approvedCount={
+          approvedCount
+        }
+        approvedParticipations={
+          approvedParticipations
+        }
+        players={
+          MOCK_PLAYERS
+        }
+        teams={season.teams}
+        drawingLocked={
+          drawingLocked
+        }
+        onTeamsChange={
+          handleTeamsChange
+        }
+        onDrawingComplete={
+          handleDrawingComplete
+        }
+      />
 
-        <ProgressCard
-          label="Match Progress"
-          current={season.currentMatch}
-          total={season.totalMatches}
-          description="Progress pertandingan yang sudah dimainkan."
-        />
-      </section>
+      {/* ==================================================
+          PARTICIPANTS
+          ================================================== */}
 
       <SeasonParticipants
         seasonId={season.id}
-        participations={seasonParticipations}
-        canManage={canManageParticipants}
-        onApprove={handleApproveParticipant}
-        onReject={handleRejectParticipant}
+        seasonStatus={
+          season.status
+        }
+        participations={
+          participations
+        }
+        currentPlayerId={
+          MOCK_CURRENT_PLAYER?.id ??
+          null
+        }
+        canManage={
+          canManageParticipants &&
+          !drawingLocked
+        }
+        canRegister={
+          registrationState.canRegister &&
+          !drawingLocked
+        }
+        registrationReason={
+          drawingLocked
+            ? "Drawing sudah dikunci. Registration tidak dapat diubah."
+            : registrationState.reason
+        }
+        registrationCode={
+          drawingLocked
+            ? "DRAWING_LOCKED"
+            : registrationState.code
+        }
+        approvedCount={
+          approvedCount
+        }
+        pendingCount={
+          pendingCount
+        }
+        rejectedCount={
+          rejectedCount
+        }
+        maximumParticipants={
+          season.totalParticipants
+        }
+        playersById={
+          playersById
+        }
+        onRegister={
+          handleRegister
+        }
+        onApprove={(
+          participationId,
+        ) =>
+          handleUpdateParticipantStatus(
+            participationId,
+            "APPROVED",
+          )
+        }
+        onReject={(
+          participationId,
+        ) =>
+          handleUpdateParticipantStatus(
+            participationId,
+            "REJECTED",
+          )
+        }
       />
 
-      <section className="mt-10">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-600">
-            Season Management
-          </p>
+      {/* ==================================================
+          DEBUG / STATE SUMMARY
+          ================================================== */}
 
-          <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950">
-            Competition Modules
-          </h2>
+      {drawingLocked && (
+        <Card>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                Season State
+              </p>
 
-          <p className="mt-1 text-sm text-slate-500">
-            Modul yang akan digunakan untuk mengelola jalannya Season.
-          </p>
-        </div>
+              <h2 className="mt-1 text-lg font-extrabold text-slate-950">
+                Drawing Result Persisted
+              </h2>
 
-        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <ManagementCard
-            icon={Users}
-            title="Participants"
-            description="Kelola peserta dan status pendaftaran Season."
-            status="Active"
-          />
+              <p className="mt-1 text-sm leading-6 text-slate-500">
+                Hasil roster sekarang berada di
+                Season state dan siap digunakan
+                oleh module Match.
+              </p>
+            </div>
 
-          <ManagementCard
-            icon={Users}
-            title="Teams"
-            description="Kelola empat team yang bertanding pada Season."
-          />
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {season.teams.map(
+                (team) => (
+                  <div
+                    key={team.id}
+                    className="rounded-xl bg-slate-50 px-3 py-2 text-center"
+                  >
+                    <p className="truncate text-xs font-bold text-slate-500">
+                      {team.name}
+                    </p>
 
-          <ManagementCard
-            icon={Users}
-            title="Player Drawing"
-            description="Pembagian pemain secara random dan seimbang."
-          />
-
-          <ManagementCard
-            icon={Trophy}
-            title="Match Drawing"
-            description="Atur urutan enam pertandingan tanpa pairing duplikat."
-          />
-
-          <ManagementCard
-            icon={CalendarDays}
-            title="Matches"
-            description="Lihat fixture dan status seluruh pertandingan."
-          />
-
-          <ManagementCard
-            icon={Trophy}
-            title="Standings & Awards"
-            description="Klasemen, statistik, champion, dan penghargaan Season."
-          />
-        </div>
-      </section>
+                    <p className="mt-1 text-lg font-black text-slate-950">
+                      {
+                        team.roster
+                          .length
+                      }
+                    </p>
+                  </div>
+                ),
+              )}
+            </div>
+          </div>
+        </Card>
+      )}
     </div>
-  )
+  );
 }
 
-export default SeasonDetailPage
+export default SeasonDetailPage;
